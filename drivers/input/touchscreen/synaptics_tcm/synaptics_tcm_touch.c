@@ -62,6 +62,7 @@ enum touch_status {
 	LIFT = 0,
 	FINGER = 1,
 	GLOVED_FINGER = 2,
+	FAKE_LIFT = 3,
 	NOP = -1,
 };
 
@@ -133,7 +134,7 @@ struct touch_data {
 struct touch_hcd {
 	bool irq_wake;
 	bool report_touch;
-	unsigned char *prev_status;
+	struct object_data* prev_object_data;
 	unsigned int max_x;
 	unsigned int max_y;
 	unsigned int max_objects;
@@ -635,14 +636,39 @@ static void touch_report(void)
 	touch_count = 0;
 
 	for (idx = 0; idx < touch_hcd->max_objects; idx++) {
-		if (touch_hcd->prev_status[idx] == LIFT &&
-				object_data[idx].status == LIFT)
+		// aomsin hacks
+
+		if (object_data[idx].status == LIFT)
+			object_data[idx].z = 0;
+
+		if (object_data[idx].status == FINGER || object_data[idx].status == GLOVED_FINGER)
+		{
+			if (touch_hcd->prev_object_data[idx].status != LIFT)
+			{
+				uint32_t threshold = 35; // range: 40 - 55 ?
+
+				//if (touch_hcd->prev_object_data[idx].status == FAKE_LIFT)
+				//	threshold = 70; // retap
+
+				if (object_data[idx].z < threshold) 
+				{
+					uint32_t off = 3;
+
+					if (touch_hcd->prev_object_data[idx].status == FAKE_LIFT || (object_data[idx].z + off) < touch_hcd->prev_object_data[idx].z)
+						object_data[idx].status = FAKE_LIFT;
+				}
+			}
+		}
+
+		if ((touch_hcd->prev_object_data[idx].status == LIFT || touch_hcd->prev_object_data[idx].status == FAKE_LIFT) &&
+				(object_data[idx].status == LIFT || object_data[idx].status == FAKE_LIFT))
 			status = NOP;
 		else
 			status = object_data[idx].status;
 
 		switch (status) {
 		case LIFT:
+		case FAKE_LIFT:
 #ifdef TYPE_B_PROTOCOL
 			input_mt_slot(touch_hcd->input_dev, idx);
 			input_mt_report_slot_state(touch_hcd->input_dev,
@@ -700,7 +726,14 @@ static void touch_report(void)
 			break;
 		}
 
-		touch_hcd->prev_status[idx] = object_data[idx].status;
+		touch_hcd->prev_object_data[idx].status = object_data[idx].status;
+		touch_hcd->prev_object_data[idx].x_pos = object_data[idx].x_pos;
+		touch_hcd->prev_object_data[idx].y_pos = object_data[idx].y_pos;
+		touch_hcd->prev_object_data[idx].x_width = object_data[idx].x_width;
+		touch_hcd->prev_object_data[idx].y_width = object_data[idx].y_width;
+		touch_hcd->prev_object_data[idx].z = object_data[idx].z;
+		touch_hcd->prev_object_data[idx].tx_pos = object_data[idx].tx_pos;
+		touch_hcd->prev_object_data[idx].rx_pos = object_data[idx].rx_pos;
 	}
 
 	if (touch_count == 0) {
@@ -748,11 +781,11 @@ static int touch_set_input_params(void)
 	if (touch_hcd->max_objects == 0)
 		return 0;
 
-	kfree(touch_hcd->prev_status);
-	touch_hcd->prev_status = kzalloc(touch_hcd->max_objects, GFP_KERNEL);
-	if (!touch_hcd->prev_status) {
+	kfree(touch_hcd->prev_object_data);
+	touch_hcd->prev_object_data = kzalloc(touch_hcd->max_objects * sizeof(struct object_data), GFP_KERNEL);
+	if (!touch_hcd->prev_object_data) {
 		LOGE(tcm_hcd->pdev->dev.parent,
-				"Failed to allocate memory for touch_hcd->prev_status\n");
+				"Failed to allocate memory for touch_hcd->prev_object_data\n");
 		return -ENOMEM;
 	}
 
@@ -1087,7 +1120,7 @@ static int touch_init(struct syna_tcm_hcd *tcm_hcd)
 
 err_set_input_reporting:
 	kfree(touch_hcd->touch_data.object_data);
-	kfree(touch_hcd->prev_status);
+	kfree(touch_hcd->prev_object_data);
 
 	RELEASE_BUFFER(touch_hcd->resp);
 	RELEASE_BUFFER(touch_hcd->out);
@@ -1108,7 +1141,7 @@ static int touch_remove(struct syna_tcm_hcd *tcm_hcd)
 	input_unregister_device(touch_hcd->input_dev);
 
 	kfree(touch_hcd->touch_data.object_data);
-	kfree(touch_hcd->prev_status);
+	kfree(touch_hcd->prev_object_data);
 
 	RELEASE_BUFFER(touch_hcd->resp);
 	RELEASE_BUFFER(touch_hcd->out);

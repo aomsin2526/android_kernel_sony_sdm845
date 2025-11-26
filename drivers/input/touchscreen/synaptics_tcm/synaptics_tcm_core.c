@@ -187,6 +187,18 @@ SHOW_STORE_PROTOTYPE(syna_tcm, cover_x_max)
 SHOW_STORE_PROTOTYPE(syna_tcm, cover_y_min)
 SHOW_STORE_PROTOTYPE(syna_tcm, cover_y_max)
 
+SHOW_STORE_PROTOTYPE(syna_tcm, disable_noise_mitigation);
+SHOW_STORE_PROTOTYPE(syna_tcm, inhibit_frequency_shift);
+SHOW_STORE_PROTOTYPE(syna_tcm, requested_frequency);
+SHOW_STORE_PROTOTYPE(syna_tcm, disable_hsync);
+SHOW_STORE_PROTOTYPE(syna_tcm, rezero_on_exit_deep_sleep);
+SHOW_STORE_PROTOTYPE(syna_tcm, charger_connected);
+SHOW_STORE_PROTOTYPE(syna_tcm, no_baseline_relaxation);
+SHOW_STORE_PROTOTYPE(syna_tcm, in_wakeup_gesture_mode);
+SHOW_STORE_PROTOTYPE(syna_tcm, stimulus_fingers);
+SHOW_STORE_PROTOTYPE(syna_tcm, grip_suppression_enabled);
+SHOW_STORE_PROTOTYPE(syna_tcm, enable_thick_glove);
+
 static struct device_attribute *attrs[] = {
 	ATTRIFY(info),
 	ATTRIFY(asic_id),
@@ -206,6 +218,18 @@ static struct device_attribute *dynamic_config_attrs[] = {
 	ATTRIFY(cover_x_max),
 	ATTRIFY(cover_y_min),
 	ATTRIFY(cover_y_max),
+
+	ATTRIFY(disable_noise_mitigation),
+	ATTRIFY(inhibit_frequency_shift),
+	ATTRIFY(requested_frequency),
+	ATTRIFY(disable_hsync),
+	ATTRIFY(rezero_on_exit_deep_sleep),
+	ATTRIFY(charger_connected),
+	ATTRIFY(no_baseline_relaxation),
+	ATTRIFY(in_wakeup_gesture_mode),
+	ATTRIFY(stimulus_fingers),
+	ATTRIFY(grip_suppression_enabled),
+	ATTRIFY(enable_thick_glove),
 };
 
 static ssize_t syna_tcm_sysfs_asic_id_show(struct device *dev,
@@ -686,6 +710,18 @@ dynamic_config_sysfs(cover_x_min, DC_CLOSED_COVER_X_MIN)
 dynamic_config_sysfs(cover_x_max, DC_CLOSED_COVER_X_MAX)
 dynamic_config_sysfs(cover_y_min, DC_CLOSED_COVER_Y_MIN)
 dynamic_config_sysfs(cover_y_max, DC_CLOSED_COVER_Y_MAX)
+
+dynamic_config_sysfs(disable_noise_mitigation, DC_DISABLE_NOISE_MITIGATION)
+dynamic_config_sysfs(inhibit_frequency_shift, DC_INHIBIT_FREQUENCY_SHIFT)
+dynamic_config_sysfs(requested_frequency, DC_REQUESTED_FREQUENCY)
+dynamic_config_sysfs(disable_hsync, DC_DISABLE_HSYNC)
+dynamic_config_sysfs(rezero_on_exit_deep_sleep, DC_REZERO_ON_EXIT_DEEP_SLEEP)
+dynamic_config_sysfs(charger_connected, DC_CHARGER_CONNECTED)
+dynamic_config_sysfs(no_baseline_relaxation, DC_NO_BASELINE_RELAXATION)
+dynamic_config_sysfs(in_wakeup_gesture_mode, DC_IN_WAKEUP_GESTURE_MODE)
+dynamic_config_sysfs(stimulus_fingers, DC_STIMULUS_FINGERS)
+dynamic_config_sysfs(grip_suppression_enabled, DC_GRIP_SUPPRESSION_ENABLED)
+dynamic_config_sysfs(enable_thick_glove, DC_ENABLE_THICK_GLOVE)
 
 static ssize_t syna_tcm_sysfs_glove_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
